@@ -39,12 +39,8 @@ import qualified Database.PostgreSQL.Simple.Internal as PG
 import qualified Database.PostgreSQL.Simple.ToField as PGTF
 import qualified Database.PostgreSQL.Simple.FromField as PGFF
 import qualified Database.PostgreSQL.Simple.Types as PG
-import Database.PostgreSQL.Simple.Ok (Ok (..))
-
-import qualified Database.PostgreSQL.LibPQ as LibPQ
 
 import Control.Monad.Trans.Resource
-import Control.Exception (throw)
 import Control.Monad.IO.Class (MonadIO (..))
 import Data.Data
 import Data.Typeable (Typeable)
@@ -72,7 +68,6 @@ import qualified Blaze.ByteString.Builder.Char8 as BBB
 import Data.Text (Text)
 import Data.Aeson
 import Data.Aeson.Types (modifyFailure)
-import Control.Monad (forM)
 import Control.Monad.Trans.Reader (runReaderT)
 import Control.Monad.Trans.Writer (runWriterT)
 import Data.Acquire (Acquire, mkAcquire, with)
@@ -122,7 +117,7 @@ withPostgresqlPool ci = withPostgresqlPoolWithVersion getServerVersion ci
 --
 -- @since 2.6.2
 withPostgresqlPoolWithVersion :: (MonadBaseControl IO m, MonadLogger m, MonadIO m, IsSqlBackend backend)
-                              => (PG.Connection -> IO (Maybe Double)) 
+                              => (PG.Connection -> IO (Maybe Double))
                               -- ^ action to perform to get the server version
                               -> ConnectionString
                               -- ^ Connection string to the database.
@@ -191,11 +186,11 @@ withPostgresqlConn = withPostgresqlConnWithVersion getServerVersion
 -- @since 2.6.2
 withPostgresqlConnWithVersion :: (MonadIO m, MonadBaseControl IO m, MonadLogger m, IsSqlBackend backend)
                               => (PG.Connection -> IO (Maybe Double))
-                              -> ConnectionString 
+                              -> ConnectionString
                               -> (backend -> m a)
                               -> m a
 withPostgresqlConnWithVersion getVer = withSqlConn . open' (const $ return ()) getVer
-                              
+
 open'
     :: (IsSqlBackend backend)
     => (PG.Connection -> IO ())
@@ -340,71 +335,14 @@ withStmt' :: MonadIO m
           -> [PersistValue]
           -> Acquire (Source m [PersistValue])
 withStmt' conn query vals =
-    pull `fmap` mkAcquire openS closeS
-  where
-    openS = do
-      -- Construct raw query
-      rawquery <- PG.formatQuery conn query (map P vals)
-
-      -- Take raw connection
-      (rt, rr, rc, ids) <- PG.withConnection conn $ \rawconn -> do
-            -- Execute query
-            mret <- LibPQ.exec rawconn rawquery
-            case mret of
-              Nothing -> do
-                merr <- LibPQ.errorMessage rawconn
-                fail $ case merr of
-                         Nothing -> "Postgresql.withStmt': unknown error"
-                         Just e  -> "Postgresql.withStmt': " ++ B8.unpack e
-              Just ret -> do
-                -- Check result status
-                status <- LibPQ.resultStatus ret
-                case status of
-                  LibPQ.TuplesOk -> return ()
-                  _ -> PG.throwResultError "Postgresql.withStmt': bad result status " ret status
-
-                -- Get number and type of columns
-                cols <- LibPQ.nfields ret
-                oids <- forM [0..cols-1] $ \col -> fmap ((,) col) (LibPQ.ftype ret col)
-                -- Ready to go!
-                rowRef   <- newIORef (LibPQ.Row 0)
-                rowCount <- LibPQ.ntuples ret
-                return (ret, rowRef, rowCount, oids)
-      let getters
-            = map (\(col, oid) -> getGetter conn oid $ PG.Field rt col oid) ids
-      return (rt, rr, rc, getters)
-
-    closeS (ret, _, _, _) = LibPQ.unsafeFreeResult ret
-
-    pull x = do
-        y <- liftIO $ pullS x
-        case y of
-            Nothing -> return ()
-            Just z -> yield z >> pull x
-
-    pullS (ret, rowRef, rowCount, getters) = do
-        row <- atomicModifyIORef rowRef (\r -> (r+1, r))
-        if row == rowCount
-           then return Nothing
-           else fmap Just $ forM (zip getters [0..]) $ \(getter, col) -> do
-                                mbs <- LibPQ.getvalue' ret row col
-                                case mbs of
-                                  Nothing ->
-                                    -- getvalue' verified that the value is NULL.
-                                    -- However, that does not mean that there are
-                                    -- no NULL values inside the value (e.g., if
-                                    -- we're dealing with an array of optional values).
-                                    return PersistNull
-                                  Just bs -> do
-                                    ok <- PGFF.runConversion (getter mbs) conn
-                                    bs `seq` case ok of
-                                                        Errors (exc:_) -> throw exc
-                                                        Errors [] -> error "Got an Errors, but no exceptions"
-                                                        Ok v  -> return v
+    mkAcquire openS closeS
+    where
+        closeS _= return ()
+        openS  = PG.fold conn query (map P vals) CL.sourceNull processRow
+        processRow s row = return $ s >> yield (pVal <$> row)
 
 -- | Avoid orphan instances.
-newtype P = P PersistValue
-
+newtype P = P { pVal :: PersistValue }
 
 instance PGTF.ToField P where
     toField (P (PersistText t))        = PGTF.toField t
@@ -424,6 +362,10 @@ instance PGTF.ToField P where
     toField (P (PersistDbSpecific s))  = PGTF.toField (Unknown s)
     toField (P (PersistObjectId _))    =
         error "Refusing to serialize a PersistObjectId to a PostgreSQL value"
+
+instance PGFF.FromField P where
+    fromField _ Nothing = return . P $ PersistNull
+    fromField f mdata   = P <$> (getGetter (PGFF.typeOid f) f mdata)
 
 newtype Unknown = Unknown { unUnknown :: ByteString }
   deriving (Eq, Show, Read, Ord, Typeable)
@@ -515,8 +457,8 @@ builtinGetters = I.fromList
         listOf f = convertPV (PersistList . map (nullable f) . PG.fromPGArray)
           where nullable = maybe PersistNull
 
-getGetter :: PG.Connection -> PG.Oid -> Getter PersistValue
-getGetter _conn oid
+getGetter :: PG.Oid -> Getter PersistValue
+getGetter oid
   = fromMaybe defaultGetter $ I.lookup (PG.oid2int oid) builtinGetters
   where defaultGetter = convertPV (PersistDbSpecific . unUnknown)
 
