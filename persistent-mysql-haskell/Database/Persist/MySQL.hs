@@ -25,6 +25,7 @@ module Database.Persist.MySQL
   , insertEntityOnDuplicateKeyUpdate
   , insertManyOnDuplicateKeyUpdate
   , insertEntityManyOnDuplicateKeyUpdate
+  , insertIgnore
 #if MIN_VERSION_base(4,7,0)
     , HandleUpdateCollision
     , pattern SomeField
@@ -1402,3 +1403,28 @@ putManySql entityDef' numRecords
         , " ON DUPLICATE KEY UPDATE "
         , commaSeparated fieldSets
         ]
+
+-- | Insert an entity but don't throw errors when it exists.
+insertIgnore
+    :: forall record backend m.
+    ( backend ~ PersistEntityBackend record
+    , BackendCompatible SqlBackend backend
+    , PersistEntity record
+    , MonadIO m
+    )
+    => record
+    -> ReaderT backend m ()
+insertIgnore record = rawExecute q recordValues where
+  fieldDbToText = T.pack . escapeDBName . fieldDB
+  entityDef' = entityDef $ Just record
+  entityFieldNames = map fieldDbToText $ entityFields entityDef'
+  tableName = T.pack $ escapeDBName $ entityDB entityDef'
+  recordValues = map toPersistValue $ toPersistFields record
+  recordPlaceholders = parenWrapped $ commaSeparated $ map (const "?") recordValues
+  q = T.concat
+      [ "INSERT IGNORE INTO "
+      , tableName
+      , parenWrapped $ commaSeparated entityFieldNames
+      , " VALUES "
+      , recordPlaceholders
+      ]
