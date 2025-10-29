@@ -38,7 +38,7 @@ library
                    , resourcet             >= 1.1
                    , monad-logger
                    , resource-pool
-                   , mysql-haskell         >= 0.8.0.0 && < 1.0
+                   , mysql-haskell         >= 0.8.0.0 && < 1.2
                    -- keep the following in sync with @mysql-haskell@ .cabal
                    , io-streams            >= 1.2     && < 2.0
                    , time                  >= 1.5.0

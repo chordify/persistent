@@ -101,6 +101,18 @@ specs = describe "DuplicateKeyUpdate" $ do
         []
       dbItems <- sort . fmap entityVal <$> selectList [] []
       dbItems @== sort postUpdate
+    it "only copies when newer value is greater than existing one" $ db $ do
+      deleteWhere ([] :: [Filter Item])
+      insertMany_ items
+      let newItems = map (\i -> i { itemQuantity = Just 0, itemPrice = fmap (*2) (itemPrice i) }) items
+          postUpdate = map (\i -> i { itemPrice = fmap (*2) (itemPrice i) }) items
+      insertManyOnDuplicateKeyUpdate
+        newItems
+        [ copyWhenGreater ItemPrice
+        ]
+        []
+      dbItems <- sort . fmap entityVal <$> selectList [] []
+      dbItems @== sort postUpdate
     it "inserts without modifying existing records if no updates specified" $ db $ do
       let newItem = Item "item3" "hi friends!" Nothing Nothing
       deleteWhere ([] :: [Filter Item])
