@@ -33,6 +33,7 @@ module Database.Persist.MySQL
   , copyUnlessNull
   , copyUnlessEmpty
   , copyUnlessEq
+  , copyWhenGreater
   -- * TLS configuration
   , setMySQLConnectInfoTLS
   , MySQLTLS.TrustedCAStore(..)
@@ -1424,6 +1425,12 @@ data HandleUpdateCollision record where
     CopyField :: EntityField record typ -> HandleUpdateCollision record
     -- | Only copy the field if it is not equal to the provided value.
     CopyUnlessEq :: PersistField typ => EntityField record typ -> typ -> HandleUpdateCollision record
+    -- | Only copy the field if the new value is greater than the existing value.
+    CopyWhenGreater :: PersistField typ => EntityField record typ -> HandleUpdateCollision record
+
+-- | Copy the field into the database only if its new value is greater than existing one.
+copyWhenGreater :: PersistField typ => EntityField record typ -> HandleUpdateCollision record
+copyWhenGreater = CopyWhenGreater
 
 -- | Copy the field into the database only if the value in the
 -- corresponding record is non-@NULL@.
@@ -1596,10 +1603,18 @@ mkBulkInsertQuery
 mkBulkInsertQuery records fieldValues updates =
     (q, recordValues <> updsValues <> copyUnlessValues)
   where
-    mfieldDef x = case x of
-        CopyField rec -> Right (fieldDbToText (persistFieldDef rec))
-        CopyUnlessEq rec val -> Left (fieldDbToText (persistFieldDef rec), toPersistValue val)
-    (fieldsToMaybeCopy, updateFieldNames) = partitionEithers $ map mfieldDef fieldValues
+    collectFieldDef !x (compareCopyList, toMaybeCopyList, fieldNamesList) = case x of
+      CopyField rec ->
+        let !fieldText = fieldDbToText (persistFieldDef rec)
+        in (compareCopyList, toMaybeCopyList, fieldText : fieldNamesList)
+      CopyUnlessEq rec val ->
+        let !fieldText = (fieldDbToText (persistFieldDef rec), toPersistValue val)
+        in (compareCopyList, fieldText : toMaybeCopyList, fieldNamesList)
+      CopyWhenGreater rec ->
+        let !fieldText = fieldDbToText (persistFieldDef rec)
+        in (fieldText : compareCopyList, toMaybeCopyList, fieldNamesList)
+    (fieldsCompareCopy, fieldsToMaybeCopy, updateFieldNames)
+      = foldr collectFieldDef ([], [], []) fieldValues
     fieldDbToText = T.pack . escapeF . fieldDB
     entityDef' = entityDef $ either id (map entityVal) records
     firstField = case entityFieldNames of
@@ -1623,11 +1638,19 @@ mkBulkInsertQuery records fieldValues updates =
         ,   n
         , ")"
         ]
+    mkCompareFieldSet n = T.concat
+      [ n
+      , "=IF("
+      ,   n, " < VALUES(", n, "),"
+      ,   "VALUES(", n, "),", n
+      , ")"
+      ]
     condFieldSets = map (uncurry mkCondFieldSet) fieldsToMaybeCopy
+    compareFieldSets = map mkCompareFieldSet fieldsCompareCopy
     fieldSets = map (\n -> T.concat [n, "=VALUES(", n, ")"]) updateFieldNames
     upds = map (Util.mkUpdateText' (pack . escapeF) id) updates
     updsValues = map (\(Update _ val _) -> toPersistValue val) updates
-    updateText = case fieldSets <> upds <> condFieldSets of
+    updateText = case fieldSets <> upds <> condFieldSets <> compareFieldSets of
         [] -> T.concat [firstField, "=", firstField]
         xs -> Util.commaSeparated xs
     q = T.concat
