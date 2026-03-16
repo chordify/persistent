@@ -126,10 +126,21 @@ runConn f = do
   let printDebug = if debugPrint then print . fromLogStr else void . return
   let ff = rawExecute "SET SESSION sql_mode = ''" [] >> f
   flip runLoggingT (\_ _ _ s -> printDebug s) $ do
-    _ <- if not travis
-      then withMySQLPool (mkMySQLConnectInfo "localhost" "test" "test" "test") 1 $ runSqlPool ff
-      else withMySQLPool (mkMySQLConnectInfo "localhost" "travis" "" "persistent") 1 $ runSqlPool ff
-    return ()
+    void
+        $ withMySQLPool
+            ( mkMySQLConnectInfo
+                ( MySQL.defaultConnectInfo
+                    { MySQL.ciHost     = "localhost"
+                    , MySQL.ciUser     = "test"
+                    , MySQL.ciPassword = "test"
+                    , MySQL.ciDatabase = "test"
+                    , MySQL.ciPort =
+                        if travis
+                            then 33306
+                            else MySQL.ciPort MySQL.defaultConnectInfo
+                    }))
+            1
+        $ runSqlPool ff
 
 db :: SqlPersistT (LoggingT (ResourceT IO)) () -> Assertion
 db actions = do

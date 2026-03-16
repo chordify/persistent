@@ -154,9 +154,9 @@ openMySQLConn ci@(MySQLConnectInfo innerCi _) logFunc = do
     autocommit' conn False -- disable autocommit!
     smap <- newIORef $ Map.empty
     let stCache = mkStatementCache $ mkSimpleStatementCache smap
-    let backend = 
-          mkPersistBackend $ 
-          projectBackend $ 
+    let backend =
+          mkPersistBackend $
+          projectBackend $
           SqlBackend
           { connPrepare    = prepare' conn
           , connStmtMap    = stCache
@@ -171,7 +171,7 @@ openMySQLConn ci@(MySQLConnectInfo innerCi _) logFunc = do
           , connRollback   = const $ rollback' conn
           , connEscapeFieldName = T.pack . escapeF
           , connEscapeTableName = T.pack . escapeE . getEntityDBName
-          , connEscapeRawName = T.pack . escapeDBName . T.unpack 
+          , connEscapeRawName = T.pack . escapeDBName . T.unpack
           , connNoLimit    = "LIMIT 18446744073709551615"
           -- This noLimit is suggested by MySQL's own docs, see
           -- <http://dev.mysql.com/doc/refman/5.5/en/select.html>
@@ -1213,21 +1213,8 @@ data MySQLConnectInfo = MySQLConnectInfo
   } deriving Show
 
 -- | Public constructor for @MySQLConnectInfo@.
-mkMySQLConnectInfo
-  :: NetworkSocket.HostName  -- ^ hostname
-  -> BSC.ByteString          -- ^ username
-  -> BSC.ByteString          -- ^ password
-  -> BSC.ByteString          -- ^ database
-  -> MySQLConnectInfo
-mkMySQLConnectInfo host user pass db
-  = MySQLConnectInfo innerCi Nothing
-  where
-    innerCi = MySQL.defaultConnectInfo {
-        MySQL.ciHost     = host
-      , MySQL.ciUser     = user
-      , MySQL.ciPassword = pass
-      , MySQL.ciDatabase = db
-    }
+mkMySQLConnectInfo :: MySQL.ConnectInfo -> MySQLConnectInfo
+mkMySQLConnectInfo innerCi = MySQLConnectInfo innerCi Nothing
 
 -- | Update port number for @MySQLConnectInfo@.
 setMySQLConnectInfoPort
