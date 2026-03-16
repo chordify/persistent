@@ -20,7 +20,9 @@ allow-newer:
     , bytestring-lexing:base
     , postgresql-simple-interval:persistent
     , mysql-haskell:memory
-    , word24:base
+
+allow-older:
+      mysql-haskell:deepseq
 
 source-repository-package
     type: git
