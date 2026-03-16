@@ -1,5 +1,57 @@
 # Changelog for persistent-mysql
 
+##  2.13.1.6
+
+* [#1610](https://github.com/yesodweb/persistent/pull/1610)
+    * Added `NoAction` as a `CascadeAction` 
+
+##  2.13.1.5
+
+* [#1526](https://github.com/yesodweb/persistent/pull/1526)
+    * Parse `tinyint` column as `SqlOther "tinyint"` rather than `SqlBool`, fixing breakage in legitimate non-Boolean uses of `tinyint` on MySQL 8.0
+
+##  2.13.1.4
+
+* [#1459](https://github.com/yesodweb/persistent/pull/1459)
+    * Make use of `CautiousMigration` type alias for clarity.
+
+##  2.13.1.3
+
+* [#1372](https://github.com/yesodweb/persistent/pull/1372)
+    * Fix migrations which add a new column in `persistent-mysql` ([#1373](https://github.com/yesodweb/persistent/issues/1373))
+    * Include MigrationTest in `persistent-mysql` tests
+
+##  2.13.1.2
+
+* [#1367](https://github.com/yesodweb/persistent/pull/1367),
+  [#1366](https://github.com/yesodweb/persistent/pull/1367),
+  [#1338](https://github.com/yesodweb/persistent/pull/1338),
+  [#1335](https://github.com/yesodweb/persistent/pull/1335)
+    * Support GHC 9.2
+
+## 2.13.1.1
+
+* [#1360](https://github.com/yesodweb/persistent/pull/1360)
+    * Fix anomalies in migration of integer columns in MySQL 8
+
+## 2.13.1.0
+
+* [#1341](https://github.com/yesodweb/persistent/pull/1341)
+    * Add `SqlBackendHooks` to allow for instrumentation of queries.
+* [#1327](https://github.com/yesodweb/persistent/pull/1327)
+    * Update backend to support new `StatementCache` interface
+
+## 2.13.0.4
+
+* No longer errors on `json` columns. [#1333](https://github.com/yesodweb/persistent/pull/1333)
+
+## 2.13.0.3
+
+* Bugfix: Omit `REFERENCES` in `CREATe TABLE` statements. These are ignored by
+  MySQL, but are a syntax error for MariaDB.
+  [#1355](https://github.com/yesodweb/persistent/pull/1355), a continuation of
+  [#1283](https://github.com/yesodweb/persistent/pull/1283)
+
 ## 2.13.0.2
 
 * Bugfix: prevent fetching constraint info from other databases during migrations [#1301](https://github.com/yesodweb/persistent/pull/1301)

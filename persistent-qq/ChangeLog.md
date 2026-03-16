@@ -1,5 +1,31 @@
 # Changelog for persistent-qq
 
+## 2.12.0.7
+* [#1601](https://github.com/yesodweb/persistent/pull/1601)
+  * Adjust a test to avoid deprecated entity definition syntax
+
+## 2.12.0.6
+
+* Fix test compilation by importing `Control.Monad` explicitly [#1487](https://github.com/yesodweb/persistent/pull/1487)
+
+## 2.12.0.5
+
+* Fix a bug where comments would break the quasiquoter. [#1436](https://github.com/yesodweb/persistent/pull/1436)
+
+## 2.12.0.4
+
+* Improve compile-time performance of generated code, especially when building with -O2.
+  Previously, the test suite took 1:16 to build with -O2, and after this patch,
+  it only takes 5s. [#1434](https://github.com/yesodweb/persistent/pull/1434)
+
+## 2.12.0.3
+
+* Require `persistent-2.14` in tests
+
+## 2.12.0.2
+
+* Support aeson-2 in the test suite [#1351](https://github.com/yesodweb/persistent/pull/1351/)
+
 ## 2.12.0.1
 
 * Support GHC 9. [#1265](https://github.com/yesodweb/persistent/pull/1265)

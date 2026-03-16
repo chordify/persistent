@@ -1,5 +1,44 @@
 # Changelog for persistent-sqlite
 
+## 2.13.3.1
+
+* [1585](https://github.com/yesodweb/persistent/pull/1585)
+    * Fix missing timezone "Z" in Sqlite UTCTime strings, e.g.
+      "2025-04-12T06:53:42Z"
+
+## 2.13.3.0
+
+* [#1524](https://github.com/yesodweb/persistent/pull/1524)
+    * Add Database.Persist.Sqlite.createSqlitePoolWithConfig to create a SQLite
+      connection pool with a connection string and ConnectionPoolConfig.
+      Using ConnectionPoolConfig, it is possible to set the connection idle timeout.
+* [#1486](https://github.com/yesodweb/persistent/pull/1486)
+    * Add Database.Sqlite.open' which takes a ByteString
+* [#1522](https://github.com/yesodweb/persistent/pull/1522)
+    * Update the sqlite amalgamation to 3.43.1
+
+## 2.13.2.0
+
+* [#1488](https://github.com/yesodweb/persistent/pull/1488)
+    * Add `openRawSqliteConn` for creating `RawSqlite SqlBackend` connections
+      that aren't automatically cleaned-up.
+
+## 2.13.1.1
+
+* [#1459](https://github.com/yesodweb/persistent/pull/1459)
+    * Make use of `CautiousMigration` type alias for clarity.
+
+## 2.13.1.0
+
+* [#1341](https://github.com/yesodweb/persistent/pull/1341)
+    * Add `SqlBackendHooks` to allow for instrumentation of queries.
+* [#1327](https://github.com/yesodweb/persistent/pull/1327)
+    * Update backend to support new `StatementCache` interface
+
+## 2.13.0.4
+
+* `aeson-2.0` support [#1351](https://github.com/yesodweb/persistent/pull/1351/)
+
 ## 2.13.0.3
 
 * Somehow failed to properly release the safe-to-remove changes.

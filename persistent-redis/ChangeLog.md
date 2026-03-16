@@ -1,3 +1,16 @@
+### 2.13.0.2
+
+* [#1536](https://github.com/yesodweb/persistent/pull/1536)
+    * Support GHC 9.10
+
+## 2.13.0.1
+
+* [#1367](https://github.com/yesodweb/persistent/pull/1367),
+  [#1366](https://github.com/yesodweb/persistent/pull/1367),
+  [#1338](https://github.com/yesodweb/persistent/pull/1338),
+  [#1335](https://github.com/yesodweb/persistent/pull/1335)
+    * Support GHC 9.2
+
 ## 2.13.0.0
 
 * [#1123](https://github.com/yesodweb/persistent/pull/1223):

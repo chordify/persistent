@@ -2,6 +2,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -14,26 +15,69 @@
 
 module Database.Persist.TH.PersistWithSpec where
 
-import TemplateTestImports
-import Database.Persist.TH.PersistWith.Model (IceCreamId)
-import Data.List (find)
+import Control.Monad
+import Database.Persist.TH.PersistWith.Model as Model (IceCream, IceCreamId)
 import Language.Haskell.TH as TH
+import TemplateTestImports
 
-mkPersistWith sqlSettings $(discoverEntities) [persistLowerCase|
+mkPersistWith
+    sqlSettings
+    $(discoverEntities)
+    [persistLowerCase|
 
 BestTopping
     iceCream IceCreamId
+    otherCream Model.IceCreamId
+    keyCream (Key IceCream)
+    qualifiedKeyCream (Key Model.IceCream)
+    nullableCream IceCreamId Maybe
+    maybeCream (Maybe IceCreamId)
+    maybeQualifiedCream (Maybe Model.IceCreamId)
+    maybeQualifiedKeyCream (Maybe (Key Model.IceCream))
+    maybeKeyCream (Maybe (Key IceCream))
 
 |]
 
+deriving instance Show (EntityField BestTopping a)
+deriving instance Eq (EntityField BestTopping a)
+
+data SomeField where
+    SomeField :: EntityField BestTopping a -> SomeField
+
+allFields =
+    [ SomeField BestToppingIceCream
+    , SomeField BestToppingOtherCream
+    , SomeField BestToppingKeyCream
+    , SomeField BestToppingQualifiedKeyCream
+    , SomeField BestToppingMaybeCream
+    , SomeField BestToppingNullableCream
+    , SomeField BestToppingMaybeQualifiedCream
+    , SomeField BestToppingMaybeQualifiedKeyCream
+    , SomeField BestToppingMaybeKeyCream
+    ]
+
 spec :: Spec
 spec = describe "mkPersistWith" $ do
-    it "works" $ do
-        let
-            edef =
-                entityDef (Proxy @BestTopping)
-            Just iceCreamField =
-                find ((FieldNameHS "iceCream" ==) . fieldHaskell) (getEntityFields edef)
-        fieldReference iceCreamField
-            `shouldBe`
-                ForeignRef (EntityNameHS "IceCream")
+    describe "finds references" $ do
+        forM_ allFields $ \(SomeField field) ->
+            it (show field) (shouldReferToIceCream field)
+
+shouldReferToIceCream :: EntityField BestTopping a -> IO ()
+shouldReferToIceCream field =
+    unless (reference == iceCreamRef) $ do
+        expectationFailure $
+            mconcat
+                [ "The field '"
+                , show field
+                , "' does not have a reference to IceCream.\n"
+                , "Got Reference: "
+                , show reference
+                , "\n"
+                , "Expected     : "
+                , show iceCreamRef
+                ]
+  where
+    reference =
+        fieldReference (persistFieldDef field)
+    iceCreamRef =
+        ForeignRef (EntityNameHS "IceCream")

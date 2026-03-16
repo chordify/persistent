@@ -1,5 +1,313 @@
 # Changelog for persistent
 
+# 2.18.1.0
+* [#1616](https://github.com/yesodweb/persistent/pull/1616)
+  * Allow overriding the default cascade option for foreign keys. 
+* [#1608](https://github.com/yesodweb/persistent/pull/1608)
+  * Improves documentation on getBy with nullable fields
+  * Updates the warning text present when you try to make a Unique field that is nullable
+
+# 2.18.0.0
+
+* [#1610](https://github.com/yesodweb/persistent/pull/1610)
+  * Added `NoAction` as a `CascadeAction`
+
+# 2.17.1.0
+
+* [#1601](https://github.com/yesodweb/persistent/pull/1601)
+  * Fix parsing of quoted entity field attributes
+  * Add and enforce `psQuotedAttributeErrorLevel` to deprecate quoted entity field attributes
+  * Improve parsing of types and entity fields
+
+# 2.17.0.0
+
+* [#1595](https://github.com/yesodweb/persistent/pull/1595)
+    * Add `tabulateEntityApply` to `PersistEntity` class similar to
+      `tabulateEntityA` but that works on `Apply` type instead of `Applicative`.
+      This allows you to use `foldMap1` and other non-empty structures with
+      tabulating and manipulating records.
+
+# 2.16.0.0
+
+* [#1584](https://github.com/yesodweb/persistent/pull/1584)
+    * Rename `Span` to `SourceSpan`
+    * Parse entity definitions using Megaparsec.
+    * Support Haddock-style multiline pre-comments.
+* [#1589](https://github.com/yesodweb/persistent/pull/1589)
+    * Support configurable parse errors and warnings
+* [#1585](https://github.com/yesodweb/persistent/pull/1585)
+    * Support parsing PersistField UTCTime from text with timezone, e.g. "2025-04-12T06:53:42Z".
+      This is needed for Sqlite, which has no native datetime support but uses e.g. TEXT.
+* [#1587](https://github.com/yesodweb/persistent/pull/1587)
+    * Improve documentation of `mpsFieldLabelModifier`.
+
+# 2.15.1.0
+
+* [#1519](https://github.com/yesodweb/persistent/pull/1519/files/9865a295f4545d30e55aacb6efc25f27f758e8ad#diff-5af2883367baae8f7f266df6a89fc2d1defb7572d94ed069e05c8135a883bc45)
+    * Add `keyAndEntityFieldsDatabase`. This was intended to be added in 2.14.7.0 but was not properly re-exported.
+
+# 2.15.0.1
+
+* [#1575](https://github.com/yesodweb/persistent/pull/1575)
+    * Fix benchmark build for GHC 9.8-9.12
+    * Support `template-haskell` up to 2.24
+
+# 2.15.0.0
+
+* [#1569](https://github.com/yesodweb/persistent/pull/1569)
+  * Add position information to `EntityDef`, `UnboundEntityDef` via a `Span`
+    field as a preliminary design that just gives the entire span of the
+    input text (i.e. the entire file or quasiquote the item is defined in).
+  * Move `Database.Persist.TH` internals to `Database.Persist.TH.Internal` and
+    no longer export the following internals:
+    * lensPTH
+    * parseReferences
+    * embedEntityDefs
+    * fieldError
+    * AtLeastOneUniqueKey(..)
+    * OnlyOneUniqueKey(..)
+    * pkNewtype
+
+## 2.14.6.3
+
+* [#1544](https://github.com/yesodweb/persistent/pull/1544)
+    * Fix type error message when no unique keys are defined on a model and you
+      use a function with constraint `AtLeastOneUniqueKey`.
+
+## 2.14.6.2
+
+* [#1536](https://github.com/yesodweb/persistent/pull/1536/)
+    * Build with GHC 9.10
+
+## 2.14.6.1
+
+* [#1528](https://github.com/yesodweb/persistent/pull/1528)
+    * The `PersistField Int{,8,16,32,64}` instances will now work with a
+      `PersistRational`, provided that the denominator is 1. This fixes the bug
+      where `SUM` in Postgres would change the type of a column being summed.
+
+## 2.14.6.0
+
+* [#1477](https://github.com/yesodweb/persistent/pull/1477)
+    * Qualified references to other tables will work
+* [#1503](https://github.com/yesodweb/persistent/pull/1503)
+    * Create Haddocks from entity documentation comments
+* [1497](https://github.com/yesodweb/persistent/pull/1497)
+    * Always generates `SymbolToField "id"` instance
+* [#1509](https://github.com/yesodweb/persistent/pull/1509)
+    * Provide `ViaPersistEntity` for defining `PathMultiPiece` for entity keys.
+* [#1480](https://github.com/yesodweb/persistent/pull/1480)
+  * Add `mpsAvoidHsKeyword` in `MkPersistSettings`
+  *
+## 2.14.5.2
+
+* [#1513](https://github.com/yesodweb/persistent/pull/1513)
+    * Support GHC 9.8 and `aeson-2.2`
+
+## 2.14.5.1
+
+* [#1496](https://github.com/yesodweb/persistent/pull/1496)
+    * Fixes name shadowing error at the generated `keyFromRecordM` function.
+* [#1505](https://github.com/yesodweb/persistent/pull/1505)
+    * Fixes the comment line parsing rule so that accommodates paragraph breaks.
+
+## 2.14.5.0
+
+* [#1469](https://github.com/yesodweb/persistent/pull/1469)
+    * Change default implementation for `insertUnique_` to not perform
+      unecessary queries (mirrors 1449)
+* [#1437](https://github.com/yesodweb/persistent/pull/1437)
+    * Add `existsBy` to `PersistUniqueRead`
+
+## 2.14.4.5
+
+* [#1460](https://github.com/yesodweb/persistent/pull/1468)
+    * Remove extraneous `map toPersistValue` call in the `mkInsertValues`
+      function, as it evaluates to `id`.
+* [#1476](https://github.com/yesodweb/persistent/pull/1476)
+    * Fix `mkRecordName` to suffix `_` if the field name matches any of Haskell keywords.
+
+## 2.14.4.4
+
+* [#1460](https://github.com/yesodweb/persistent/pull/1460)
+    * Fix a problem where a `Primary` key causes `mkPersist` to generate code
+      that doesn't compile under `NoFieldSelectors`
+
+## 2.14.4.3
+
+* [#1452](https://github.com/yesodweb/persistent/pull/1452)
+    * Implement `repsert` as a special case of `respertMany`.  Allows backend
+      specific behavior.
+
+## 2.14.4.2
+
+* [#1451](https://github.com/yesodweb/persistent/pull/1451)
+    * Support `mtl >= 2.3`
+
+## 2.14.4.1
+
+* [#1449](https://github.com/yesodweb/persistent/pull/1449)
+    * Default implementation for `insert_` which doesn't perform any unnecessary
+      queries.
+
+## 2.14.4.0
+
+* [#1440](https://github.com/yesodweb/persistent/pull/1440)
+    * Defined NFData PersistValue
+
+## 2.14.3.2
+
+* [#1446](https://github.com/yesodweb/persistent/pull/1446)
+    * Foreign key discovery was fixed for qualified names, `Key Model`, and
+      `Maybe` references.
+* [#1438](https://github.com/yesodweb/persistent/pull/1438)
+    * Clarify wording on the error message for null in unique constraint
+* [#1447](https://github.com/yesodweb/persistent/pull/1447)
+    * Fix `SafeToInsert` not being generated correctly for some `Id` columns
+
+## 2.14.3.1
+
+* [#1428](https://github.com/yesodweb/persistent/pull/1428)
+    * Fix that the documentation for `discoverEntities` was not being generated.
+
+## 2.14.3.0
+
+* [#1425](https://github.com/yesodweb/persistent/pull/1425)
+    * Introduce an alias `setPsUseSnakeCaseForeignKeys` for
+      `setPsUseSnakeCaseForiegnKeys` due to a typo in the latter;
+      deprecate `setPsUseSnakeCaseForiegnKeys`
+
+## 2.14.2.0
+
+* [#1421](https://github.com/yesodweb/persistent/pull/1421)
+    * Add `mpsCamelCaseCompositeKeySelector` field to `MkPersistSettings`,
+      which define the style of the entity's composite key.
+
+## 2.14.1.0
+
+* [#1418](https://github.com/yesodweb/persistent/pull/1418/)
+    * Re-export `SafeToInsert` from `Database.Persist.Class`, which should
+      re-export it through `Database.Persist`, `Database.Persist.Sql`, etc.
+* [#1409](https://github.com/yesodweb/persistent/pull/1409)
+    * Fix incorrect reference to rawSql in documentation.
+
+## 2.14.0.3
+
+* [#1411](https://github.com/yesodweb/persistent/pull/1411)
+    * Fix the docs for `FieldNameDB`, and update `FieldDef.fieldComments` docs
+      since the quasiquoter *supports* field comments now.
+
+## 2.14.0.2
+
+* [#1407](https://github.com/yesodweb/persistent/pull/1407)
+    * Fix a name shadowing warning.
+
+## 2.14.0.1
+
+* [#1392](https://github.com/yesodweb/persistent/pull/1392)
+    * Enhance `selectList` documentation with TypeApplications examples.
+    * Clarify `selectSource` documentation wording.
+* [#1391](https://github.com/yesodweb/persistent/pull/1391)
+    * Increasing quasi module test coverage, improve error assertions
+* [#1401](https://github.com/yesodweb/persistent/pull/1401)
+    * Change `Entity` back into a regular record and drop the `HasField`
+      instance. This is technically a breaking change, but [the bug in GHC's
+      `COMPLETE` annotations](https://gitlab.haskell.org/ghc/ghc/-/issues/15681)
+      rendered a super common pattern a much more invasive breaking change than
+      anticipated. As a result, upgrading to `persistent-2.14` was untenable.
+
+      If you *did* upgrade and this broke your codebase *again*, please let me
+      know and I can release another patch to shim it.
+
+## 2.14.0.0
+
+* [#1343](https://github.com/yesodweb/persistent/pull/1343)
+    * Implement Type Literal based field definitions
+* [#1387](https://github.com/yesodweb/persistent/pull/1387)
+    * Better UX with `insert`. We now report a type error when you try to
+      `insert` an `Entity` or a function, and we also forbid `insert`ing if the
+      database would throw an error missing a primary key.
+* [#1383](https://github.com/yesodweb/persistent/pull/1383)
+    * Primary keys have a `NonEmpty` of fields, not a `[]` of fields.
+    * A `Primary` key on an entity now creates a `Unique` constructror for that
+      record, with the name `#{entityName}PrimaryKey`. This also affects the
+      generation of `AtLeastOneUniqueKey` and `OnlyOneUniqueKey` instances, so
+      you may need to change behavior on these classes.
+* [#1381](https://github.com/yesodweb/persistent/pull/1381)
+    * `Entity` is given a `HasField` instance that uses the database field
+      names. This is primarily done to support `OverloadedRecordDot` in GHC 9.2
+      and above.
+    * A consequence of this is that the `Entity` constructor has been renamed to
+      `Entity'`. A pattern synonym is provided that should work in almost all
+      cases. You may incur a `MonadFail m` constraint if you are pattern
+      matching directly on the constructor in a `do` result.
+* [#1364](https://github.com/yesodweb/persistent/pull/1346)
+    * The type `SomePersistField` was removed in favor of using `PersistValue`
+      directly.
+* [#1386](https://github.com/yesodweb/persistent/pull/1386)
+    * The module `Database.Persist.Class.DeleteCascade` was deleted since you
+      can put cascade behavior directly on your database models.
+    * Removed `mkSave` from `Database.Persist.TH`. Use `mkEntityDefList`
+      instead.
+    * Remove the `CompositeDef` constructor from `ReferenceDef` which was not
+      used internally anymore.
+* [#1385](https://github.com/yesodweb/persistent/pull/1385)
+    * The support for entity-level sum types is deprecated. It adds a
+      considerable amount of complexity to the code, and the pattern is not
+      particularly good for actually supporting sum types in most databases.
+* [#1384](https://github.com/yesodweb/persistent/pull/1384)
+    * Add `tabulateEntityA` to the `PersistEntity` class, allowing you to
+      construct an `Entity a` by providing a function `EntityField a t -> f t`.
+      Note that this doesn't make sense for sum entities, and the implementation
+      `error`s.
+    * Add `tabulateEntity` as a pure version of that.
+
+## 2.13.3.5
+
+* [#1374](https://github.com/yesodweb/persistent/pull/1374)
+    * Increasing test coverage for errors thrown when parsing entity definitions
+
+## 2.13.3.4
+* [#1379](https://github.com/yesodweb/persistent/pull/1379)
+    * `mkPersist` now generates code that compiles under `NoFieldSelectors` and `DuplicateRecordFields` even if field labels are not prefixed
+* [#1376](https://github.com/yesodweb/persistent/pull/1376)
+    * Add coverage for parsing nested parens/lists in field types
+* [#1370](https://github.com/yesodweb/persistent/pull/1370)
+    * Add spec to assert Persistent.TH is the only import required when defining entities
+
+## 2.13.3.3
+
+* [#1369](https://github.com/yesodweb/persistent/pull/1369)
+    * Fix `withObject` needing to be imported
+
+## 2.13.3.2
+
+* [#1315](https://github.com/yesodweb/persistent/pull/1315)
+    * Refactor entity constraint parsing in Quasi module
+
+## 2.13.3.1
+
+* [#1367](https://github.com/yesodweb/persistent/pull/1367),
+  [#1366](https://github.com/yesodweb/persistent/pull/1367),
+  [#1338](https://github.com/yesodweb/persistent/pull/1338),
+  [#1335](https://github.com/yesodweb/persistent/pull/1335)
+    * Support GHC 9.2
+* [#1356](https://github.com/yesodweb/persistent/pull/1356)
+    * Improve parse errors in generated FromJSON instances
+
+## 2.13.3.0
+
+* [#1341](https://github.com/yesodweb/persistent/pull/1341)
+    * Add `SqlBackendHooks` to allow for instrumentation of queries.
+* [#1327](https://github.com/yesodweb/persistent/pull/1327)
+    * Update `SqlBackend` to use new `StatementCache` interface
+      instead of `IORef (Map Text Statement)`
+
+## 2.13.2.2
+
+* [#1351](https://github.com/yesodweb/persistent/pull/1351/)
+    * `aeson-2.0` support
+
 ## 2.13.2.1
 
 * [#1329](https://github.com/yesodweb/persistent/pull/1329)

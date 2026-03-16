@@ -12,5 +12,6 @@ main = hspec $ do
     describe "Database" $ describe "Persist" $ do
         THSpec.spec
         QuasiSpec.spec
+        QuasiSpec.warningSpecs
         ClassSpec.spec
         PersistValueSpec.spec

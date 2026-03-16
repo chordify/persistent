@@ -5,7 +5,9 @@
 module Database.Persist.EntityDef
     ( -- * The 'EntityDef' type
       EntityDef
+
       -- * Construction
+
       -- * Accessors
     , getEntityHaskellName
     , getEntityDBName
@@ -13,48 +15,71 @@ module Database.Persist.EntityDef
     , getEntityFieldsDatabase
     , getEntityForeignDefs
     , getEntityUniques
+    , getEntityUniquesNoPrimaryKey
     , getEntityId
     , getEntityIdField
     , getEntityKeyFields
     , getEntityComments
     , getEntityExtra
+    , getEntitySpan
     , isEntitySum
     , entityPrimary
     , entitiesPrimary
     , keyAndEntityFields
-     -- * Setters
+    , keyAndEntityFieldsDatabase
+
+      -- * Setters
     , setEntityId
     , setEntityIdDef
     , setEntityDBName
     , overEntityFields
+
       -- * Related Types
-    , EntityIdDef(..)
+    , EntityIdDef (..)
     ) where
 
-import Data.Text (Text)
-import Data.Map (Map)
 import Data.List.NonEmpty (NonEmpty)
+import Data.Map (Map)
+import Data.Text (Text)
 
 import Database.Persist.EntityDef.Internal
 import Database.Persist.FieldDef
 
+import Database.Persist.Names
 import Database.Persist.Types.Base
-    ( UniqueDef
-    , ForeignDef
+    ( ForeignDef
+    , SourceSpan
+    , UniqueDef (..)
     , entityKeyFields
     )
-import Database.Persist.Names
 
--- | Retrieve the list of 'UniqueDef' from an 'EntityDef'. This currently does
--- not include a @Primary@ key, if one is defined. A future version of
--- @persistent@ will include a @Primary@ key among the 'Unique' constructors for
--- the 'Entity'.
+-- | Retrieve the list of 'UniqueDef' from an 'EntityDef'. This does not include
+-- a @Primary@ key, if one is defined. A future version of @persistent@ will
+-- include a @Primary@ key among the 'Unique' constructors for the 'Entity'.
+--
+-- @since 2.14.0.0
+getEntityUniquesNoPrimaryKey
+    :: EntityDef
+    -> [UniqueDef]
+getEntityUniquesNoPrimaryKey ed =
+    filter isNotPrimaryKey $ entityUniques ed
+  where
+    isNotPrimaryKey ud =
+        let
+            constraintName = unConstraintNameHS $ uniqueHaskell ud
+         in
+            constraintName /= unEntityNameHS (getEntityHaskellName ed) <> "PrimaryKey"
+
+-- | Retrieve the list of 'UniqueDef' from an 'EntityDef'.  As of version 2.14,
+-- this will also include the primary key on the entity, if one is defined. If
+-- you do not want the primary key, see 'getEntityUniquesNoPrimaryKey'.
 --
 -- @since 2.13.0.0
 getEntityUniques
     :: EntityDef
     -> [UniqueDef]
-getEntityUniques = entityUniques
+getEntityUniques =
+    entityUniques
 
 -- | Retrieve the Haskell name of the given entity.
 --
@@ -79,7 +104,7 @@ getEntityExtra = entityExtra
 --
 -- @since 2.13.0.0
 setEntityDBName :: EntityNameDB -> EntityDef -> EntityDef
-setEntityDBName db ed = ed { entityDB = db }
+setEntityDBName db ed = ed{entityDB = db}
 
 getEntityComments :: EntityDef -> Maybe Text
 getEntityComments = entityComments
@@ -165,7 +190,7 @@ setEntityIdDef
     :: EntityIdDef
     -> EntityDef
     -> EntityDef
-setEntityIdDef i ed = ed { entityId = i }
+setEntityIdDef i ed = ed{entityId = i}
 
 -- |
 --
@@ -179,7 +204,7 @@ getEntityKeyFields = entityKeyFields
 --
 -- @since 2.13.0.0
 setEntityFields :: [FieldDef] -> EntityDef -> EntityDef
-setEntityFields fd ed = ed { entityFields = fd }
+setEntityFields fd ed = ed{entityFields = fd}
 
 -- | Perform a mapping function over all of the entity fields, as determined by
 -- 'getEntityFieldsDatabase'.
@@ -191,3 +216,13 @@ overEntityFields
     -> EntityDef
 overEntityFields f ed =
     setEntityFields (f (getEntityFieldsDatabase ed)) ed
+
+-- | Gets the 'Source' of the definition of the entity.
+--
+-- Note that as of this writing the span covers the entire file or quasiquote
+-- where the item is defined due to parsing limitations. This may be changed in
+-- a future release to be more accurate.
+--
+-- @since 2.15.0.0
+getEntitySpan :: EntityDef -> Maybe SourceSpan
+getEntitySpan = entitySpan

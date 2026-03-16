@@ -1,5 +1,38 @@
 ## Unreleased changes
 
+# 2.13.2.1
+* [#1610](https://github.com/yesodweb/persistent/pull/1610)
+  * Added `NoAction` as a `CascadeAction`
+
+# 2.13.2.0
+* [#1601](https://github.com/yesodweb/persistent/pull/1601)
+  * Adjust test data to avoid deprecated entity definition syntax
+
+## 2.13.1.4
+
+* Support `persistent-2.17`
+
+## 2.13.1.3
+
+* Support persistent-2.14 with `SafeToInsert` class
+
+## 2.13.1.2
+
+* [#1367](https://github.com/yesodweb/persistent/pull/1367),
+  [#1366](https://github.com/yesodweb/persistent/pull/1367),
+  [#1338](https://github.com/yesodweb/persistent/pull/1338),
+  [#1335](https://github.com/yesodweb/persistent/pull/1335)
+    * Support GHC 9.2
+* Test migration idempotency on additional integer types [#1359](https://github.com/yesodweb/persistent/pull/1359)
+
+## 2.13.1.0
+
+* Support `persistent-2.13.3.0` [#1341](https://github.com/yesodweb/persistent/pull/1341)
+
+## 2.13.0.4
+
+* `aeson-2.0` support
+
 ## 2.13.0.3
 
 * Accidentally released 2.13.0.2 with some testing changes.

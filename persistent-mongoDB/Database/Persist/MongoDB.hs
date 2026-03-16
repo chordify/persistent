@@ -6,6 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-} -- Pattern match 'PersistDbSpecific'
 -- | Use persistent-mongodb the same way you would use other persistent
@@ -113,7 +114,7 @@ module Database.Persist.MongoDB
     ) where
 
 import Control.Exception (throw, throwIO)
-import Control.Monad (forM_, liftM, unless, (>=>))
+import Control.Monad (forM_, liftM, unless, (>=>), void)
 import Control.Monad.IO.Class (liftIO)
 import qualified Control.Monad.IO.Class as Trans
 import Control.Monad.IO.Unlift (MonadUnliftIO, withRunInIO)
@@ -370,10 +371,6 @@ queryByKey :: (PersistEntity record, PersistEntityBackend record ~ DB.MongoConte
            => Key record -> DB.Query
 queryByKey k = (DB.select (keyToMongoDoc k) (collectionNameFromKey k)) {DB.project = projectionFromKey k}
 
-selectByKey :: (PersistEntity record, PersistEntityBackend record ~ DB.MongoContext)
-            => Key record -> DB.Selection
-selectByKey k = DB.select (keyToMongoDoc k) (collectionNameFromKey k)
-
 updatesToDoc :: (PersistEntity record, PersistEntityBackend record ~ DB.MongoContext)
              => [Update record] -> DB.Document
 updatesToDoc upds = map updateToMongoField upds
@@ -553,24 +550,27 @@ instance PersistStoreWrite DB.MongoContext where
     insertKey k record = DB.insert_ (collectionName record) $
                          entityToInsertDoc (Entity k record)
 
-    repsert   k record = DB.save (collectionName record) $
-                         documentFromEntity (Entity k record)
+    repsert k record =
+        void $ DB.updateMany
+          (collectionName record)
+          [(keyToMongoDoc k, documentFromEntity (Entity k record), [DB.Upsert])]
 
-    replace k record = do
-        DB.replace (selectByKey k) (recordToDocument record)
-        return ()
+    replace k record =
+        -- replace a single matching document
+        void $ DB.updateMany
+          (collectionNameFromKey k)
+          [(keyToMongoDoc k, recordToDocument record, [])]
 
     delete k =
-        DB.deleteOne DB.Select {
-          DB.coll = collectionNameFromKey k
-        , DB.selector = keyToMongoDoc k
-        }
+        void $ DB.deleteMany
+          (collectionNameFromKey k)
+          [(keyToMongoDoc k, [DB.SingleRemove])]
 
     update _ [] = return ()
     update key upds =
-        DB.modify
-           (DB.Select (keyToMongoDoc key) (collectionNameFromKey key))
-           $ updatesToDoc upds
+        void $ DB.updateMany
+          (collectionNameFromKey key)
+          [(keyToMongoDoc key, updatesToDoc upds, [DB.MultiUpdate])]
 
     updateGet key upds = do
         context <- ask
@@ -578,7 +578,7 @@ instance PersistStoreWrite DB.MongoContext where
         either err instantiate result
       where
         instantiate doc = do
-            Entity _ rec <- fromPersistValuesThrow t doc
+            rec <- entityVal <$> fromPersistValuesThrow t doc
             return rec
         err msg = Trans.liftIO $ throwIO $ KeyNotFound $ show key ++ msg
         t = entityDefFromKey key
@@ -589,7 +589,7 @@ instance PersistStoreRead DB.MongoContext where
             case d of
               Nothing -> return Nothing
               Just doc -> do
-                Entity _ ent <- fromPersistValuesThrow t doc
+                ent <- entityVal <$> fromPersistValuesThrow t doc
                 return $ Just ent
           where
             t = entityDefFromKey k
@@ -607,10 +607,9 @@ instance PersistUniqueRead DB.MongoContext where
 
 instance PersistUniqueWrite DB.MongoContext where
     deleteBy uniq =
-        DB.delete DB.Select {
-          DB.coll = collectionName $ dummyFromUnique uniq
-        , DB.selector = toUniquesDoc uniq
-        }
+        void $ DB.deleteMany
+          (collectionName $ dummyFromUnique uniq)
+          [(toUniquesDoc uniq, [DB.SingleRemove])]
 
     upsert newRecord upds = do
         uniq <- onlyUnique newRecord
@@ -629,12 +628,14 @@ instance PersistUniqueWrite DB.MongoContext where
     upsertBy uniq newRecord upds = do
         let uniqueDoc = toUniquesDoc uniq :: [DB.Field]
         let uniqKeys = map DB.label uniqueDoc :: [DB.Label]
-        let insDoc = DB.exclude uniqKeys $ toInsertDoc newRecord :: DB.Document
-        let selection = DB.select uniqueDoc $ collectionName newRecord :: DB.Selection
         mdoc <- getBy uniq
-        case mdoc of
-          Nothing -> unless (null upds) (DB.upsert selection ["$setOnInsert" DB.=: insDoc])
-          Just _ -> unless (null upds) (DB.modify selection $ DB.exclude uniqKeys $ updatesToDoc upds)
+        let updateOrUpsert = case mdoc of
+              Nothing ->
+                let insDoc = DB.exclude uniqKeys $ toInsertDoc newRecord :: DB.Document
+                 in [(uniqueDoc, ["$setOnInsert" DB.=: insDoc], [DB.Upsert])]
+              Just _ ->
+                [(uniqueDoc, DB.exclude uniqKeys $ updatesToDoc upds, [DB.MultiUpdate])]
+        unless (null upds) . void $ DB.updateMany (collectionName newRecord) updateOrUpsert
         newMdoc <- getBy uniq
         case newMdoc of
           Nothing -> err "possible race condition: getBy found Nothing"
@@ -697,16 +698,14 @@ projectionFromRecord = projectionFromEntityDef . entityDef . Just
 instance PersistQueryWrite DB.MongoContext where
     updateWhere _ [] = return ()
     updateWhere filts upds =
-        DB.modify DB.Select {
-          DB.coll = collectionName $ dummyFromFilts filts
-        , DB.selector = filtersToDoc filts
-        } $ updatesToDoc upds
+        void $ DB.updateMany
+          (collectionName $ dummyFromFilts filts)
+          [(filtersToDoc filts, updatesToDoc upds, [DB.MultiUpdate])]
 
-    deleteWhere filts = do
-        DB.delete DB.Select {
-          DB.coll = collectionName $ dummyFromFilts filts
-        , DB.selector = filtersToDoc filts
-        }
+    deleteWhere filts =
+        void $ DB.deleteMany
+          (collectionName $ dummyFromFilts filts)
+          [ (filtersToDoc filts, [])]
 
 instance PersistQueryRead DB.MongoContext where
     count filts = do
@@ -721,7 +720,6 @@ instance PersistQueryRead DB.MongoContext where
         pure (cnt > 0)
 
     -- | uses cursor option NoCursorTimeout
-    -- If there is no sorting, it will turn the $snapshot option on
     -- and explicitly closes the cursor when done
     selectSourceRes filts opts = do
         context <- ask
@@ -731,9 +729,7 @@ instance PersistQueryRead DB.MongoContext where
         close context cursor = runReaderT (DB.closeCursor cursor) context
         open :: DB.MongoContext -> IO DB.Cursor
         open = runReaderT (DB.find (makeQuery filts opts)
-                   -- it is an error to apply $snapshot when sorting
-                   { DB.snapshot = noSort
-                   , DB.options = [DB.NoCursorTimeout]
+                   { DB.options = [DB.NoCursorTimeout]
                    })
         pullCursor context cursor = do
             mdoc <- liftIO $ runReaderT (DB.nextBatch cursor) context
@@ -743,8 +739,6 @@ instance PersistQueryRead DB.MongoContext where
                     forM_ docs $ fromPersistValuesThrow t >=> yield
                     pullCursor context cursor
         t = entityDef $ Just $ dummyFromFilts filts
-        (_, _, orders) = limitOffsetOrder opts
-        noSort = null orders
 
     selectFirst filts opts = DB.findOne (makeQuery filts opts)
                          >>= Traversable.mapM (fromPersistValuesThrow t)
