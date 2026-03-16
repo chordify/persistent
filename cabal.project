@@ -19,6 +19,7 @@ allow-newer:
     , postgresql-simple:template-haskell
     , bytestring-lexing:base
     , postgresql-simple-interval:persistent
+    , mysql-haskell:*
 
 source-repository-package
     type: git
