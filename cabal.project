@@ -19,7 +19,7 @@ allow-newer:
     , postgresql-simple:template-haskell
     , bytestring-lexing:base
     , postgresql-simple-interval:persistent
-    , mysql-haskell:memory
+    , mysql-haskell:*
 
 allow-older:
       mysql-haskell:deepseq
