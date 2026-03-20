@@ -35,7 +35,15 @@ BlogPost
 |]
 
 connectionInfo :: MySQLConnectInfo
-connectionInfo = mkMySQLConnectInfo "localhost" "test" "test" "example"
+connectionInfo =
+    mkMySQLConnectInfo
+        ( defaultConnectInfo
+            { ciHost = "localhost"
+            , ciUser = "test"
+            , ciPassword = "test"
+            , ciDatabase = "example"
+            }
+        )
 
 main :: IO ()
 main = runStderrLoggingT $ withMySQLPool connectionInfo 10 $ \pool -> liftIO $ do

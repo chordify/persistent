@@ -17,6 +17,8 @@ module Database.Persist.MySQL
   , createMySQLPool
   , module Database.Persist.Sql
   , MySQLConnectInfo
+  , MySQL.defaultConnectInfo
+  , MySQL.ConnectInfo(..)
   , mkMySQLConnectInfo
   , setMySQLConnectInfoPort
   , setMySQLConnectInfoCharset
