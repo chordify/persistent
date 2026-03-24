@@ -38,7 +38,7 @@ library
                    , resourcet             >= 1.1
                    , monad-logger
                    , resource-pool
-                   , mysql-haskell         >= 0.8.0.0 && < 1.2
+                   , mysql-haskell         >= 1.2.0
                    -- keep the following in sync with @mysql-haskell@ .cabal
                    , io-streams            >= 1.2     && < 2.0
                    , time                  >= 1.5.0
@@ -70,14 +70,14 @@ test-suite test
     type:            exitcode-stdio-1.0
     main-is:         main.hs
     hs-source-dirs:  test
-    other-modules:   
+    other-modules:
         MyInit
         InsertDuplicateUpdate
         CustomConstraintTest
         ImplicitUuidSpec
     ghc-options:     -Wall
 
-    build-depends:   
+    build-depends:
         base             >= 4.9 && < 5
       , aeson
       , bytestring
@@ -87,7 +87,7 @@ test-suite test
       , http-api-data
       , HUnit
       , monad-logger
-      , mysql-haskell    >= 0.8
+      , mysql-haskell    >= 1.2.0
       , path-pieces
       , persistent
       , persistent-mysql-haskell
