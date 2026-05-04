@@ -5,7 +5,9 @@
 module Database.Persist.EntityDef
     ( -- * The 'EntityDef' type
       EntityDef
+
       -- * Construction
+
       -- * Accessors
     , getEntityHaskellName
     , getEntityDBName
@@ -19,17 +21,21 @@ module Database.Persist.EntityDef
     , getEntityKeyFields
     , getEntityComments
     , getEntityExtra
+    , getEntitySpan
     , isEntitySum
     , entityPrimary
     , entitiesPrimary
     , keyAndEntityFields
-     -- * Setters
+    , keyAndEntityFieldsDatabase
+
+      -- * Setters
     , setEntityId
     , setEntityIdDef
     , setEntityDBName
     , overEntityFields
+
       -- * Related Types
-    , EntityIdDef(..)
+    , EntityIdDef (..)
     ) where
 
 import Data.List.NonEmpty (NonEmpty)
@@ -40,7 +46,12 @@ import Database.Persist.EntityDef.Internal
 import Database.Persist.FieldDef
 
 import Database.Persist.Names
-import Database.Persist.Types.Base (ForeignDef, UniqueDef(..), entityKeyFields)
+import Database.Persist.Types.Base
+    ( ForeignDef
+    , SourceSpan
+    , UniqueDef (..)
+    , entityKeyFields
+    )
 
 -- | Retrieve the list of 'UniqueDef' from an 'EntityDef'. This does not include
 -- a @Primary@ key, if one is defined. A future version of @persistent@ will
@@ -93,7 +104,7 @@ getEntityExtra = entityExtra
 --
 -- @since 2.13.0.0
 setEntityDBName :: EntityNameDB -> EntityDef -> EntityDef
-setEntityDBName db ed = ed { entityDB = db }
+setEntityDBName db ed = ed{entityDB = db}
 
 getEntityComments :: EntityDef -> Maybe Text
 getEntityComments = entityComments
@@ -179,7 +190,7 @@ setEntityIdDef
     :: EntityIdDef
     -> EntityDef
     -> EntityDef
-setEntityIdDef i ed = ed { entityId = i }
+setEntityIdDef i ed = ed{entityId = i}
 
 -- |
 --
@@ -193,7 +204,7 @@ getEntityKeyFields = entityKeyFields
 --
 -- @since 2.13.0.0
 setEntityFields :: [FieldDef] -> EntityDef -> EntityDef
-setEntityFields fd ed = ed { entityFields = fd }
+setEntityFields fd ed = ed{entityFields = fd}
 
 -- | Perform a mapping function over all of the entity fields, as determined by
 -- 'getEntityFieldsDatabase'.
@@ -205,3 +216,13 @@ overEntityFields
     -> EntityDef
 overEntityFields f ed =
     setEntityFields (f (getEntityFieldsDatabase ed)) ed
+
+-- | Gets the 'Source' of the definition of the entity.
+--
+-- Note that as of this writing the span covers the entire file or quasiquote
+-- where the item is defined due to parsing limitations. This may be changed in
+-- a future release to be more accurate.
+--
+-- @since 2.15.0.0
+getEntitySpan :: EntityDef -> Maybe SourceSpan
+getEntitySpan = entitySpan

@@ -1,11 +1,14 @@
-{-# language UndecidableInstances #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | this just needs to compile
 module PersistentTestModelsImports where
 
 import Database.Persist.TH
 
-share [mkPersist sqlSettings] [persistUpperCase|
+share
+    [mkPersist sqlSettings]
+    [persistUpperCase|
 
 User
     name    String
