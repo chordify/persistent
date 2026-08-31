@@ -48,6 +48,7 @@ module Database.Persist.MySQL
 ) where
 
 import Control.Arrow
+import Control.Exception (bracketOnError, uninterruptibleMask_)
 import Control.Monad
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.IO.Unlift (MonadUnliftIO)
@@ -152,21 +153,23 @@ openMySQLConn :: (IsPersistBackend backend, BaseBackend backend ~ SqlBackend)
       -> LogFunc
       -> IO (MySQL.MySQLConn, backend)
 openMySQLConn ci@(MySQLConnectInfo innerCi _) logFunc = do
-    conn <- connect' ci
-    autocommit' conn False -- disable autocommit!
+    -- If anything after the socket is opened throws or is interrupted,
+    -- close the connection instead of leaking it.
+    conn <- bracketOnError (connect' ci) MySQL.close $ \conn -> do
+        autocommit' conn False -- disable autocommit!
+        pure conn
     smap <- newIORef $ Map.empty
     let stCache = mkStatementCache $ mkSimpleStatementCache smap
-    let backend =
-          mkPersistBackend $
-          projectBackend $
-          SqlBackend
+    let backend = mkPersistBackend $ projectBackend $ SqlBackend
           { connPrepare    = prepare' conn
           , connStmtMap    = stCache
           , connInsertSql  = insertSql'
           , connInsertManySql = Nothing
           , connUpsertSql = Nothing
           , connPutManySql = Just putManySql
-          , connClose      = MySQL.close conn
+          -- Since resource-pool-0.5.0.0 closing connection could be interrupted
+          -- by exception, leaking both the fd and server-side connection.
+          , connClose      = uninterruptibleMask_ (MySQL.close conn)
           , connMigrateSql = migrate' innerCi
           , connBegin      = const $ begin' conn
           , connCommit     = const $ commit' conn
