@@ -1,5 +1,15 @@
 # Changelog for persistent-mysql
 
+##  2.13.1.6
+
+* [#1610](https://github.com/yesodweb/persistent/pull/1610)
+    * Added `NoAction` as a `CascadeAction` 
+
+##  2.13.1.5
+
+* [#1526](https://github.com/yesodweb/persistent/pull/1526)
+    * Parse `tinyint` column as `SqlOther "tinyint"` rather than `SqlBool`, fixing breakage in legitimate non-Boolean uses of `tinyint` on MySQL 8.0
+
 ##  2.13.1.4
 
 * [#1459](https://github.com/yesodweb/persistent/pull/1459)

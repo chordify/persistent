@@ -1,5 +1,63 @@
 # Changelog for persistent-postgresql
 
+# 2.14.3.0
+
+* [#1616](https://github.com/yesodweb/persistent/pull/1616)
+  * Allow overriding the default cascade option for foreign keys. 
+
+# 2.14.2.0
+
+* [#1614](https://github.com/yesodweb/persistent/pull/1614)
+  * Generate migrations to create foreign key constraints while adding new foreign key columns (previously you had to generate migrations twice to create foreign key constraints)
+
+# 2.14.1.0
+
+* [#1612](https://github.com/yesodweb/persistent/pull/1612)
+  * Speed up migrations by avoiding N+1 queries.
+    You can now migrate a large set of entities much faster, by using the new `migrateEntitiesStructured` function.
+
+# 2.14.0.1
+
+* [#1610](https://github.com/yesodweb/persistent/pull/1610)
+  * Update suggested migrations to handle `NoAction` as a `CascadeAction`  
+
+## 2.14.0.0
+
+* [#1604](https://github.com/yesodweb/persistent/pull/1604)
+    * Changed the representation of intervals to use the `Interval` type from [the `postgresql-simple-interval` package](https://hackage.haskell.org/package/postgresql-simple-interval).
+      This changes the behavior of `PgInterval` for very small and very large values.
+    * Previously `PgInterval 0.000_000_9` would be rounded to `0.000_001` seconds, but now it is truncated to 0 seconds.
+    * Previously `PgInterval 9_223_372_036_854.775_808` would overflow and throw a SQL error, but now it saturates to `9_223_372_036_854.775_807` seconds.
+    * The SQL representation of `PgInterval` now always includes the `interval` prefix, like `interval '1 second'`.
+
+## 2.13.7.0
+
+* [#1600](https://github.com/yesodweb/persistent/pull/1600)
+    * Add `migrateStructured` to `Database.Persist.Postgresql.Internal`.
+      This allows you to access a structured representation of the proposed migrations
+      for use in your application.
+* [#1547](https://github.com/yesodweb/persistent/pull/1547)
+    * Bump `libpq` bounds
+
+## 2.13.6.2
+
+* [#1536](https://github.com/yesodweb/persistent/pull/1536/)
+    * Build with GHC 9.10
+
+## 2.13.6.1
+
+* [#1518](https://github.com/yesodweb/persistent/pull/1518)
+    * Normalize postgres type aliases to prevent noop migrations
+
+## 2.13.6
+
+* [#1511](https://github.com/yesodweb/persistent/pull/1511)
+   * Add the `createPostgresqlPoolTailored` function to support creating
+     connection pools with a custom connection creation function.
+   * Expose `getServerVersion` and `createBackend` for user's convenience.
+* [#1516](https://github.com/yesodweb/persistent/pull/1516)
+   * Support postgresql-simple 0.7 and postgresql-libpq 0.10
+
 ## 2.13.5.2
 
 * [#1471](https://github.com/yesodweb/persistent/pull/1471)

@@ -10,6 +10,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module ImplicitUuidSpec where
@@ -45,7 +46,8 @@ wipe = runConnAssert $ do
     rawExecute "DROP TABLE with_def_uuid;" []
     runMigration implicitUuidMigrate
 
-itDb :: String -> SqlPersistT (LoggingT (ResourceT IO)) a -> SpecWith (Arg (IO ()))
+itDb
+    :: String -> SqlPersistT (LoggingT (ResourceT IO)) a -> SpecWith (Arg (IO ()))
 itDb msg action = it msg $ runConnAssert $ void action
 
 pass :: IO ()
@@ -55,10 +57,12 @@ spec :: Spec
 spec = describe "ImplicitUuidSpec" $ before_ wipe $ do
     describe "WithDefUuidKey" $ do
         it "works on UUIDs" $ do
-            let withDefUuidKey = WithDefUuidKey (UUID "Hello")
+            let
+                withDefUuidKey = WithDefUuidKey (UUID "Hello")
             pass
     describe "getEntityId" $ do
-        let Just idField = getEntityIdField (entityDef (Proxy @WithDefUuid))
+        let
+            Just idField = getEntityIdField (entityDef (Proxy @WithDefUuid))
         it "has a UUID SqlType" $ asIO $ do
             fieldSqlType idField `shouldBe` SqlOther "UUID"
         it "is an implicit ID column" $ asIO $ do
@@ -66,10 +70,12 @@ spec = describe "ImplicitUuidSpec" $ before_ wipe $ do
 
     describe "insert" $ do
         itDb "successfully has a default" $ do
-            let matt = WithDefUuid
-                    { withDefUuidName =
-                        "Matt"
-                    }
+            let
+                matt =
+                    WithDefUuid
+                        { withDefUuidName =
+                            "Matt"
+                        }
             k <- insert matt
             mrec <- get k
             mrec `shouldBe` Just matt

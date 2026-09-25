@@ -1,5 +1,17 @@
 ## Unreleased changes
 
+# 2.13.2.1
+* [#1610](https://github.com/yesodweb/persistent/pull/1610)
+  * Added `NoAction` as a `CascadeAction`
+
+# 2.13.2.0
+* [#1601](https://github.com/yesodweb/persistent/pull/1601)
+  * Adjust test data to avoid deprecated entity definition syntax
+
+## 2.13.1.4
+
+* Support `persistent-2.17`
+
 ## 2.13.1.3
 
 * Support persistent-2.14 with `SafeToInsert` class

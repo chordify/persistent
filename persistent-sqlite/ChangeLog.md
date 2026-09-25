@@ -1,5 +1,28 @@
 # Changelog for persistent-sqlite
 
+## 2.13.3.1
+
+* [1585](https://github.com/yesodweb/persistent/pull/1585)
+    * Fix missing timezone "Z" in Sqlite UTCTime strings, e.g.
+      "2025-04-12T06:53:42Z"
+
+## 2.13.3.0
+
+* [#1524](https://github.com/yesodweb/persistent/pull/1524)
+    * Add Database.Persist.Sqlite.createSqlitePoolWithConfig to create a SQLite
+      connection pool with a connection string and ConnectionPoolConfig.
+      Using ConnectionPoolConfig, it is possible to set the connection idle timeout.
+* [#1486](https://github.com/yesodweb/persistent/pull/1486)
+    * Add Database.Sqlite.open' which takes a ByteString
+* [#1522](https://github.com/yesodweb/persistent/pull/1522)
+    * Update the sqlite amalgamation to 3.43.1
+
+## 2.13.2.0
+
+* [#1488](https://github.com/yesodweb/persistent/pull/1488)
+    * Add `openRawSqliteConn` for creating `RawSqlite SqlBackend` connections
+      that aren't automatically cleaned-up.
+
 ## 2.13.1.1
 
 * [#1459](https://github.com/yesodweb/persistent/pull/1459)

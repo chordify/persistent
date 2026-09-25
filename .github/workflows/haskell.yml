@@ -45,21 +45,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        cabal: ["3.6"]
+        cabal: ["3.12"]
         ghc:
-          - "8.4.4"
-          - "8.6.5"
-          - "8.8.4"
-          - "8.10.7"
-          - "9.0.2"
-          - "9.2.4"
-          - "9.4.1"
+          - "9.2"
+          - "9.4"
+          - "9.6"
+          - "9.8"
+          - "9.10"
+          - "9.12"
 
     env:
       CONFIG: "--enable-tests --enable-benchmarks"
     steps:
       - uses: actions/checkout@v2
-      - uses: haskell/actions/setup@v2
+      - uses: haskell-actions/setup@v2
         id: setup-haskell-cabal
         with:
           ghc-version: ${{ matrix.ghc }}
@@ -71,7 +70,8 @@ jobs:
         with:
           mongodb-version: '5.0'
       - name: Start Redis
-        uses: supercharge/redis-github-action@1.4.0
+        uses: shogo82148/actions-setup-redis@v1
+      - run: sudo apt-get update && sudo apt-get install -y libpcre3-dev
       - run: cabal v2-update
       - run: cabal v2-freeze $CONFIG
       - run: cat cabal.project.freeze
@@ -83,10 +83,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
             ${{ runner.os }}-${{ matrix.ghc }}-
-      - run: cabal v2-build all --disable-optimization --only-dependencies $CONFIG
       - run: cabal v2-build all --disable-optimization $CONFIG
       - run: cabal v2-test all --disable-optimization $CONFIG --test-options "--fail-on-focus"
       - run: cabal v2-bench all --disable-optimization $CONFIG
-      - run: cabal v2-haddock all $CONFIG
-        continue-on-error: true
       - run: cabal v2-sdist all
